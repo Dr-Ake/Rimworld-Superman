@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <KryptonianPowers>Solar Powers ({0})</KryptonianPowers>
+  <KryptonianPowersDesc>Manage Superman-inspired abilities fueled by sunlight.</KryptonianPowersDesc>
+  <KryptonianFlightNoEnergy>{0} lacks solar energy to fly.</KryptonianFlightNoEnergy>
+  <KryptonianHeatVisionMenu>Heat Vision</KryptonianHeatVisionMenu>
+  <KryptonianHeatVisionMenuDesc>Select an intensity for Kryptonian heat vision.</KryptonianHeatVisionMenuDesc>
+  <KryptonianHeatVisionLow>Heat Vision (Low)</KryptonianHeatVisionLow>
+  <KryptonianHeatVisionMedium>Heat Vision (Medium)</KryptonianHeatVisionMedium>
+  <KryptonianHeatVisionHigh>Heat Vision (High)</KryptonianHeatVisionHigh>
+  <KryptonianHeatVisionLethal>Heat Vision (Lethal)</KryptonianHeatVisionLethal>
+  <KryptonianHeatVisionDesc>Project a controllable beam of solar flame at {0} intensity. Click to begin, hold left mouse to steer, and release to stop.</KryptonianHeatVisionDesc>
+  <KryptonianHeatVisionActive>{0} unleashes heat vision. Hold left mouse to guide the beam; release to stop.</KryptonianHeatVisionActive>
+  <KryptonianHeatVisionEnded>{0} powers down their heat vision.</KryptonianHeatVisionEnded>
+  <KryptonianFlightEnable>Flight</KryptonianFlightEnable>
+  <KryptonianFlightDisable>Land</KryptonianFlightDisable>
+  <KryptonianFlightDesc>Toggle flight, ignoring terrain and moving faster while draining solar energy.</KryptonianFlightDesc>
+  <KryptonianIceBreath>Ice Breath</KryptonianIceBreath>
+  <KryptonianIceBreathDesc>Freeze a cone ahead, stunning enemies and extinguishing flames.</KryptonianIceBreathDesc>
+  <KryptonianMiscMenu>Misc Powers</KryptonianMiscMenu>
+  <KryptonianMiscMenuDesc>Access secondary Kryptonian abilities.</KryptonianMiscMenuDesc>
+  <KryptonianCellophaneS>Cellophane 'S'</KryptonianCellophaneS>
+  <KryptonianCellophaneSDesc>Stun a target for 5 seconds with a binding solar construct.</KryptonianCellophaneSDesc>
+  <KryptonianXRayVision>X-Ray Vision</KryptonianXRayVision>
+  <KryptonianXRayVisionDesc>Reveal the map within 30 tiles permanently.</KryptonianXRayVisionDesc>
+  <KryptonianSupernova>Supernova</KryptonianSupernova>
+  <KryptonianSupernovaDesc>Release all stored solar energy in a catastrophic explosion.</KryptonianSupernovaDesc>
+  <KryptonianBack>&lt;- Back</KryptonianBack>
+  <KryptonianBackDesc>Return to the previous Kryptonian menu.</KryptonianBackDesc>
+  <KryptonianNotEnoughSolar>{0} lacks the solar charge needed.</KryptonianNotEnoughSolar>
+  <KryptonianCellophaneTarget>Choose a pawn to immobilize.</KryptonianCellophaneTarget>
+  <KryptonianSupernovaTitle>Supernova Yield</KryptonianSupernovaTitle>
+  <KryptonianSupernovaRadius>Radius: {0} tiles</KryptonianSupernovaRadius>
+  <KryptonianSupernovaConfirm>Release all solar energy within a radius of {0} tiles? This will annihilate everything in the area.</KryptonianSupernovaConfirm>
+  <KryptonianAlreadyHasGene>{0} already carries the Kryptonian gene.</KryptonianAlreadyHasGene>
+  <KryptonianGeneApplied>{0} is infused with Kryptonian power!</KryptonianGeneApplied>
+  <KryptonianDormantLabel>Dormant</KryptonianDormantLabel>
+  <KryptonianDormantInspect>Dormant Kryptonian body absorbing sunlight.</KryptonianDormantInspect>
+</LanguageData>
+
+
+

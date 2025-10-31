@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <FleckDef ParentName="FleckBase">
+    <defName>KryptonianHeatBeamGlow</defName>
+    <altitudeLayer>LightingOverlay</altitudeLayer>
+    <fadeInTime>0.01</fadeInTime>
+    <solidTime>0.12</solidTime>
+    <fadeOutTime>0.18</fadeOutTime>
+    <drawOffscreen>true</drawOffscreen>
+    <graphicData>
+      <graphicClass>Graphic_Fleck</graphicClass>
+      <texPath>Things/Mote/GraserBeam</texPath>
+      <shaderType>MoteBeam</shaderType>
+      <drawSize>6</drawSize>
+      <color>(1.0, 0.2, 0.2, 0.85)</color>
+    </graphicData>
+  </FleckDef>
+
+  <FleckDef ParentName="FleckBase_RandomGraphic">
+    <defName>KryptonianHeatBeamBurn</defName>
+    <altitudeLayer>MoteLow</altitudeLayer>
+    <fadeInTime>0.05</fadeInTime>
+    <solidTime>1.6</solidTime>
+    <fadeOutTime>1.4</fadeOutTime>
+    <randomGraphics>
+      <li>
+        <graphicClass>Graphic_Fleck</graphicClass>
+        <texPath>Things/Mote/BeamBurn/BeamBurn_A</texPath>
+        <shaderType>Transparent</shaderType>
+        <drawSize>0.75</drawSize>
+        <color>(1.0, 0.25, 0.25, 0.8)</color>
+      </li>
+      <li>
+        <graphicClass>Graphic_Fleck</graphicClass>
+        <texPath>Things/Mote/BeamBurn/BeamBurn_B</texPath>
+        <shaderType>Transparent</shaderType>
+        <drawSize>0.75</drawSize>
+        <color>(1.0, 0.25, 0.25, 0.8)</color>
+      </li>
+      <li>
+        <graphicClass>Graphic_Fleck</graphicClass>
+        <texPath>Things/Mote/BeamBurn/BeamBurn_C</texPath>
+        <shaderType>Transparent</shaderType>
+        <drawSize>0.75</drawSize>
+        <color>(1.0, 0.25, 0.25, 0.8)</color>
+      </li>
+    </randomGraphics>
+  </FleckDef>
+</Defs>

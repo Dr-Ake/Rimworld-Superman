@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <ThingDef ParentName="MechSerumBase">
+    <defName>KryptonianGeneInjector</defName>
+    <label>kryptonian gene injector</label>
+    <description>A forbidden serum that rewrites a pawn into a Kryptonian, granting solar-fueled invulnerability and powers.</description>
+    <graphicData>
+      <texPath>Things/Item/Special/MechSerum</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <statBases>
+      <MarketValue>5000</MarketValue>
+      <Mass>0.8</Mass>
+    </statBases>
+    <techLevel>Ultra</techLevel>
+    <comps>
+      <li Class="CompProperties_Usable">
+        <useJob>UseItem</useJob>
+        <showUseGizmo>true</showUseGizmo>
+      </li>
+      <li Class="CompProperties_UseEffect">
+        <compClass>KryptonianGene.CompUseEffect_KryptonianGene</compClass>
+      </li>
+      <li Class="CompProperties_UseEffectDestroySelf" />
+    </comps>
+  </ThingDef>
+</Defs>
+
