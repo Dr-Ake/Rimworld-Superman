@@ -11,6 +11,7 @@
   <KryptonianHeatVisionLethal>Heat Vision (Lethal)</KryptonianHeatVisionLethal>
   <KryptonianHeatVisionDesc>Project a controllable beam of solar flame at {0} intensity. Click to begin, hold left mouse to steer, and release to stop.</KryptonianHeatVisionDesc>
   <KryptonianHeatVisionActive>{0} unleashes heat vision. Hold left mouse to guide the beam; release to stop.</KryptonianHeatVisionActive>
+  <KryptonianHeatVisionTemporarilyDisabled>Heat vision is temporarily unavailable.</KryptonianHeatVisionTemporarilyDisabled>
   <KryptonianHeatVisionEnded>{0} powers down their heat vision.</KryptonianHeatVisionEnded>
   <KryptonianFlightEnable>Flight</KryptonianFlightEnable>
   <KryptonianFlightDisable>Land</KryptonianFlightDisable>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using KryptonianGene.Abilities;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -8,11 +9,11 @@ using Verse.Sound;
 
 namespace KryptonianGene;
 
-public class CompKryptonianSolar : HediffComp
-{
-	private readonly struct HeatVisionProperties
+	public class CompKryptonianSolar : HediffComp
 	{
-		public readonly float DrainPerSecond;
+		private readonly struct HeatVisionProperties
+		{
+			public readonly float DrainPerSecond;
 
 		public readonly float DamagePerSecond;
 
@@ -33,6 +34,14 @@ public class CompKryptonianSolar : HediffComp
 			BeamScale = beamScale;
 			FireSize = fireSize;
 		}
+	}
+
+	private enum HeatVisionMode
+	{
+		Low,
+		Medium,
+		High,
+		Lethal
 	}
 
 	private const float MaxSolarCharge = 100f;
@@ -61,13 +70,15 @@ public class CompKryptonianSolar : HediffComp
 
 	private bool showingPowersMenu;
 
-	private bool showingHeatVisionMenu;
-
 	private bool showingMiscMenu;
 
 	private bool isExhausted;
 
 	private ThingWithComps cachedHeatVisionBeam;
+
+	private HeatVisionAbility heatVisionAbility;
+
+	private HeatVisionAbility HeatVision => heatVisionAbility ??= new HeatVisionAbility(this);
 
 	public Pawn Pawn => ((Hediff)base.parent).pawn;
 
@@ -96,15 +107,11 @@ public class CompKryptonianSolar : HediffComp
 		Scribe_Values.Look<int>(ref solarCooldownTicks, "solarCooldownTicks", 0, false);
 		Scribe_Values.Look<bool>(ref isFlying, "isFlying", false, false);
 		Scribe_Values.Look<bool>(ref showingPowersMenu, "showingPowersMenu", false, false);
-		Scribe_Values.Look<bool>(ref showingHeatVisionMenu, "showingHeatVisionMenu", false, false);
 		Scribe_Values.Look<bool>(ref showingMiscMenu, "showingMiscMenu", false, false);
 		Scribe_Values.Look<bool>(ref isExhausted, "isExhausted", false, false);
-		if ((int)Scribe.mode == 4)
+		if (Scribe.mode == LoadSaveMode.PostLoadInit)
 		{
-			heatVisionActive = false;
-			heatVisionWindow = null;
-			heatVisionTargetCell = IntVec3.Invalid;
-			heatVisionInputCaptured = false;
+			heatVisionAbility?.Cancel(silent: true);
 		}
 	}
 
@@ -113,7 +120,7 @@ public class CompKryptonianSolar : HediffComp
 		((HediffComp)this).CompPostTick(ref severityAdjustment);
 		if (Pawn == null || Pawn.Dead)
 		{
-			StopHeatVision(silent: true);
+			heatVisionAbility?.Cancel(silent: true);
 			return;
 		}
 		if (solarCooldownTicks > 0)
@@ -132,10 +139,7 @@ public class CompKryptonianSolar : HediffComp
 		{
 			EnterExhaustion();
 		}
-		if (heatVisionActive)
-		{
-			UpdateHeatVisionBeam();
-		}
+		heatVisionAbility?.Tick();
 		TryRechargeFromSunlight();
 		ExitExhaustionIfReady();
 	}
@@ -208,7 +212,7 @@ public class CompKryptonianSolar : HediffComp
 			if (solarCharge <= 0f)
 			{
 				EnterExhaustion();
-				StopHeatVision(silent: true);
+				heatVisionAbility?.Cancel(silent: true);
 			}
 		}
 	}
@@ -277,9 +281,8 @@ public class CompKryptonianSolar : HediffComp
 				showingPowersMenu = !showingPowersMenu;
 				if (!showingPowersMenu)
 				{
-					showingHeatVisionMenu = false;
 					showingMiscMenu = false;
-					StopHeatVision(silent: true);
+					heatVisionAbility?.Cancel(silent: true);
 				}
 			}
 		};
@@ -295,26 +298,9 @@ public class CompKryptonianSolar : HediffComp
 
 	private IEnumerable<Gizmo> GetPowerSubmenuGizmos()
 	{
-		yield return (Gizmo)new Command_Action
+		foreach (Gizmo heatVisionGizmo in HeatVision.GetGizmos())
 		{
-			defaultLabel = TaggedString.op_Implicit(Translator.Translate("KryptonianHeatVisionMenu")),
-			defaultDesc = TaggedString.op_Implicit(Translator.Translate("KryptonianHeatVisionMenuDesc")),
-			icon = (Texture)(object)ContentFinder<Texture2D>.Get("UI/Kryptonian/HeatVision", false),
-			action = delegate
-			{
-				showingHeatVisionMenu = !showingHeatVisionMenu;
-				if (showingHeatVisionMenu)
-				{
-					showingMiscMenu = false;
-				}
-			}
-		};
-		if (showingHeatVisionMenu)
-		{
-			foreach (Gizmo heatVisionGizmo in GetHeatVisionGizmos())
-			{
-				yield return heatVisionGizmo;
-			}
+			yield return heatVisionGizmo;
 		}
 		yield return (Gizmo)new Command_Action
 		{
@@ -338,10 +324,6 @@ public class CompKryptonianSolar : HediffComp
 			action = delegate
 			{
 				showingMiscMenu = !showingMiscMenu;
-				if (showingMiscMenu)
-				{
-					showingHeatVisionMenu = false;
-				}
 			}
 		};
 		if (!showingMiscMenu)
@@ -477,14 +459,14 @@ public class CompKryptonianSolar : HediffComp
 				canTargetLocations = true,
 				canTargetPawns = true,
 				canTargetBuildings = true,
-				validator = (TargetInfo target) => GenGrid.InBounds(((TargetInfo)(ref target)).Cell, ((Thing)Pawn).Map)
+				validator = (TargetInfo target) => GenGrid.InBounds(target.Cell, ((Thing)Pawn).Map)
 			};
 			Find.Targeter.BeginTargeting(val, (Action<LocalTargetInfo>)delegate(LocalTargetInfo target)
 			{
 				//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-				if (((LocalTargetInfo)(ref target)).IsValid)
+				if (target.IsValid)
 				{
-					StartHeatVision(mode, ((LocalTargetInfo)(ref target)).Cell);
+					StartHeatVision(mode, target.Cell);
 				}
 			}, Pawn, (Action)null, (Texture2D)null, true);
 		}
@@ -561,6 +543,10 @@ public class CompKryptonianSolar : HediffComp
 
 	private void StopHeatVision(bool silent = false)
 	{
+		if (heatVisionAbility != null)
+		{
+			heatVisionAbility.Cancel(silent);
+		}
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
@@ -681,7 +667,7 @@ public class CompKryptonianSolar : HediffComp
 				}
 				if ((ticksGame + current.x + current.z) % 2 == 0)
 				{
-					Vector3 val2 = ((IntVec3)(ref current)).ToVector3Shifted();
+					Vector3 val2 = current.ToVector3Shifted();
 					FleckMaker.Static(val2, map, BeamGlowFleck ?? FleckDefOf.FireGlow, heatVisionProperties.BeamScale);
 				}
 				List<Thing> thingList = GridsUtility.GetThingList(current, map);
@@ -694,7 +680,7 @@ public class CompKryptonianSolar : HediffComp
 						{
 							continue;
 						}
-						((DamageInfo)(ref val4))._002Ector(DamageDefOf.Flame, num2, heatVisionProperties.ArmorPenetration, -1f, (Thing)(object)Pawn, (BodyPartRecord)null, (ThingDef)null, (SourceCategory)0, (Thing)null, true, true, (QualityCategory)2, true, false);
+						val4._002Ector(DamageDefOf.Flame, num2, heatVisionProperties.ArmorPenetration, -1f, (Thing)(object)Pawn, (BodyPartRecord)null, (ThingDef)null, (SourceCategory)0, (Thing)null, true, true, (QualityCategory)2, true, false);
 						val3.TakeDamage(val4);
 						Pawn val5 = (Pawn)(object)((val3 is Pawn) ? val3 : null);
 						if (val5 == null)
@@ -717,7 +703,7 @@ public class CompKryptonianSolar : HediffComp
 					FireUtility.TryStartFireIn(current, map, heatVisionProperties.FireSize, (Thing)(object)Pawn, (SimpleCurve)null);
 					if (BeamBurnFleck != null)
 					{
-						FleckMaker.Static(((IntVec3)(ref current)).ToVector3Shifted(), map, BeamBurnFleck ?? FleckDefOf.Smoke, Mathf.Max(0.8f, heatVisionProperties.FireSize));
+						FleckMaker.Static(current.ToVector3Shifted(), map, BeamBurnFleck ?? FleckDefOf.Smoke, Mathf.Max(0.8f, heatVisionProperties.FireSize));
 					}
 				}
 			}
@@ -797,7 +783,7 @@ public class CompKryptonianSolar : HediffComp
 			canTargetLocations = true,
 			canTargetPawns = true,
 			canTargetBuildings = true,
-			validator = (TargetInfo target) => GenGrid.InBounds(((TargetInfo)(ref target)).Cell, ((Thing)Pawn).Map)
+			validator = (TargetInfo target) => GenGrid.InBounds(target.Cell, ((Thing)Pawn).Map)
 		};
 		Find.Targeter.BeginTargeting(val, (Action<LocalTargetInfo>)delegate(LocalTargetInfo target)
 		{
@@ -831,12 +817,12 @@ public class CompKryptonianSolar : HediffComp
 		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
 		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
 		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
-		if (!((LocalTargetInfo)(ref target)).IsValid || Pawn == null || ((Thing)Pawn).Map == null)
+		if (!target.IsValid || Pawn == null || ((Thing)Pawn).Map == null)
 		{
 			return;
 		}
-		Vector3 val = ((LocalTargetInfo)(ref target)).CenterVector3 - GenThing.TrueCenter((Thing)(object)Pawn);
-		Vector3 normalized = ((Vector3)(ref val)).normalized;
+		Vector3 val = target.CenterVector3 - GenThing.TrueCenter((Thing)(object)Pawn);
+		Vector3 normalized = val.normalized;
 		foreach (IntVec3 item in GenRadial.RadialCellsAround(((Thing)Pawn).Position, 7f, true))
 		{
 			IntVec3 current = item;
@@ -844,8 +830,8 @@ public class CompKryptonianSolar : HediffComp
 			{
 				continue;
 			}
-			val = ((IntVec3)(ref current)).ToVector3Shifted() - GenThing.TrueCenter((Thing)(object)Pawn);
-			Vector3 normalized2 = ((Vector3)(ref val)).normalized;
+			val = current.ToVector3Shifted() - GenThing.TrueCenter((Thing)(object)Pawn);
+			Vector3 normalized2 = val.normalized;
 			float num = Vector3.Angle(normalized, normalized2);
 			if (num > 45f || !GenSight.LineOfSight(((Thing)Pawn).Position, current, ((Thing)Pawn).Map))
 			{
@@ -899,13 +885,13 @@ public class CompKryptonianSolar : HediffComp
 		{
 			canTargetPawns = true,
 			canTargetLocations = false,
-			validator = (TargetInfo target) => ((TargetInfo)(ref target)).Thing is Pawn
+			validator = (TargetInfo target) => target.Thing is Pawn
 		};
 		Find.Targeter.BeginTargeting(val, (Action<LocalTargetInfo>)delegate(LocalTargetInfo target)
 		{
-			if (((LocalTargetInfo)(ref target)).Pawn != null)
+			if (target.Pawn != null)
 			{
-				((LocalTargetInfo)(ref target)).Pawn.stances.stunner.StunFor(300, (Thing)(object)Pawn, true, true, false);
+				target.Pawn.stances.stunner.StunFor(300, (Thing)(object)Pawn, true, true, false);
 				DrainSolar(2f);
 			}
 		}, Pawn, (Action)null, (Texture2D)null, true);
@@ -1005,7 +991,7 @@ public class CompKryptonianSolar : HediffComp
 		Map map = ((Thing)Pawn).Map;
 		if (((Thing)Pawn).Spawned)
 		{
-			Vector3 val = ((IntVec3)(ref center)).ToVector3Shifted();
+			Vector3 val = center.ToVector3Shifted();
 			FleckMaker.Static(val, map, FleckDefOf.PsycastAreaEffect, radius);
 			FleckMaker.Static(val, map, FleckDefOf.LightningGlow, Mathf.Max(6f, radius));
 			SoundStarter.PlayOneShotOnCamera(SoundDefOf.PsychicPulseGlobal, map);
@@ -1034,7 +1020,7 @@ public class CompKryptonianSolar : HediffComp
 						Pawn val4 = (Pawn)(object)((val3 is Pawn) ? val3 : null);
 						if (val4 != null)
 						{
-							((DamageInfo)(ref val5))._002Ector(DamageDefOf.Flame, 9999f, 10f, -1f, (Thing)(object)Pawn, (BodyPartRecord)null, (ThingDef)null, (SourceCategory)0, (Thing)null, true, true, (QualityCategory)2, true, false);
+							val5._002Ector(DamageDefOf.Flame, 9999f, 10f, -1f, (Thing)(object)Pawn, (BodyPartRecord)null, (ThingDef)null, (SourceCategory)0, (Thing)null, true, true, (QualityCategory)2, true, false);
 							((Thing)val4).TakeDamage(val5);
 						}
 						else if (val3.def.destroyable)
@@ -1053,7 +1039,7 @@ public class CompKryptonianSolar : HediffComp
 			{
 				FireUtility.TryStartFireIn(current, map, 1.2f, (Thing)(object)Pawn, (SimpleCurve)null);
 				GenTemperature.PushHeat(current, map, 2000f);
-				FleckMaker.Static(((IntVec3)(ref current)).ToVector3Shifted(), map, FleckDefOf.Smoke, 2f);
+				FleckMaker.Static(current.ToVector3Shifted(), map, FleckDefOf.Smoke, 2f);
 			}
 			else
 			{
@@ -1125,31 +1111,31 @@ public class CompKryptonianSolar : HediffComp
 
 	public void TryPreDamage(ref DamageInfo dinfo)
 	{
-		if (Pawn == null || ((DamageInfo)(ref dinfo)).Def == null || solarCharge <= 0f)
+		if (Pawn == null || dinfo.Def == null || solarCharge <= 0f)
 		{
 			return;
 		}
-		DamageDef def = ((DamageInfo)(ref dinfo)).Def;
+		DamageDef def = dinfo.Def;
 		if (IsHeatOrFireDamage(def) || def.isExplosive)
 		{
-			((DamageInfo)(ref dinfo)).SetAmount(0f);
+			dinfo.SetAmount(0f);
 			return;
 		}
-		if (((DamageInfo)(ref dinfo)).Amount < 80f)
+		if (dinfo.Amount < 80f)
 		{
-			((DamageInfo)(ref dinfo)).SetAmount(0f);
+			dinfo.SetAmount(0f);
 			return;
 		}
-		float amount = Mathf.Min(((DamageInfo)(ref dinfo)).Amount * 0.05f, 10f);
+		float amount = Mathf.Min(dinfo.Amount * 0.05f, 10f);
 		DrainSolar(amount);
-		float num = ((DamageInfo)(ref dinfo)).Amount - 80f;
+		float num = dinfo.Amount - 80f;
 		if (num <= 0f)
 		{
-			((DamageInfo)(ref dinfo)).SetAmount(0f);
+			dinfo.SetAmount(0f);
 		}
 		else
 		{
-			((DamageInfo)(ref dinfo)).SetAmount(num);
+			dinfo.SetAmount(num);
 		}
 	}
 
@@ -1208,3 +1194,5 @@ public class CompKryptonianSolar : HediffComp
 		}
 	}
 }
+
+
